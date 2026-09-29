@@ -1,8 +1,7 @@
 Source: configd
 Section: admin
-Maintainer: Vyatta Package Maintainers <DL-vyatta-help@att.com>
-Build-Depends:
- debhelper (>= 9.20160709),
+Maintainer: NuDanOS Maintainers <jon@fernandez.tech>
+Build-Depends: debhelper-compat (= 13),
  dh-golang (>= 1.18),
  dh-vci,
  dh-yang,
@@ -27,13 +26,15 @@ Build-Depends:
  golang-go-systemd-dev,
  golang-golang-x-crypto-dev,
  libaudit-dev
-Standards-Version: 3.9.6
+Standards-Version: 4.7.2
+Rules-Requires-Root: no
+Vcs-Git: https://github.com/nudanos/configd.git
+Vcs-Browser: https://github.com/nudanos/configd
 
 Package: configd
 Architecture: any
-Priority: extra
 Replaces: vyatta-configd
-Depends:
+Depends: 
  adduser,
  cli-shell-api,
  libcap2-bin,
@@ -66,8 +67,7 @@ Description: configd client library
 
 Package: yangd
 Architecture: any
-Priority: extra
-Depends:
+Depends: 
  adduser,
  libcap2-bin,
  lu,
@@ -80,8 +80,7 @@ Description: YANG daemon
 
 Package: config-utils
 Architecture: any
-Priority: extra
-Depends:
+Depends: 
  bash (>= 5~) | vyatta-bash (>= 1:4.4-1vyatta12),
  cli-shell-api,
  ${shlibs:Depends}
@@ -92,7 +91,6 @@ Description: Configuration utilities
 
 Package: yang-utils
 Architecture: any
-Priority: extra
 Replaces: yang2path
 Depends: ${perl:Depends}, ${shlibs:Depends}
 Built-Using: ${misc:Built-Using}
@@ -104,7 +102,6 @@ Architecture: all
 Depends: configd (>= ${source:Version})
 Replaces: configd (<= 1.7)
 Section: admin
-Priority: optional
 Description: configd-v1 module
  The YANG module for configd-v1
 
@@ -112,7 +109,6 @@ Package: ietf-inet-types-yang
 Architecture: all
 Replaces: configd (<= 1.7)
 Section: admin
-Priority: optional
 Description: ietf-inet-types module
  The YANG module for ietf-inet-types
 
@@ -121,7 +117,6 @@ Architecture: all
 Depends: ${yang:Depends}
 Replaces: configd (<= 1.7)
 Section: admin
-Priority: optional
 Description: ietf-netconf-monitoring module
  The YANG module for ietf-netconf-monitoring
 
@@ -129,20 +124,18 @@ Package: ietf-yang-types-yang
 Architecture: all
 Replaces: configd (<= 1.7)
 Section: admin
-Priority: optional
 Description: ietf-yang-types module
  The YANG module for ietf-yang-types
 
 Package: vyatta-system-acm-configd-v1-yang
 Architecture: all
-Depends:
+Depends: 
  acmd,
  configd (>= ${source:Version}),
  vyatta-cfg,
  ${yang:Depends}
 Replaces: configd (<= 1.7)
 Section: admin
-Priority: optional
 Description: vyatta-system-acm-configd-v1 module
  The YANG module for vyatta-system-acm-configd-v1
 
@@ -151,7 +144,6 @@ Architecture: all
 Depends: ${yang:Depends}
 Replaces: configd (<= 1.7)
 Section: admin
-Priority: optional
 Description: ietf-netconf module
  The YANG module for ietf-netconf
 
@@ -160,13 +152,11 @@ Architecture: all
 Depends: ${yang:Depends}
 Replaces: configd (<= 1.7)
 Section: admin
-Priority: optional
 Description: ietf-netconf-with-defaults module
  The YANG module for ietf-netconf-with-defaults
 
 Package: yangd-v1-yang
 Architecture: all
 Section: admin
-Priority: optional
 Description: yangd-v1 module
  The YANG module for yangd-v1

@@ -129,7 +129,7 @@ var capabilities *string = flag.String("capabilities",
 	"File specifying system capabilities")
 
 func sigstartprof() {
-	sigch := make(chan os.Signal)
+	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, syscall.SIGUSR1)
 	signal.Notify(sigch, syscall.SIGUSR2)
 	for {

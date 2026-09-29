@@ -169,7 +169,7 @@ const (
 // Deal with various formats of set/delete 'configuration path' errors, which
 // may or may not include 'Set failed' or 'Value validation failed'.
 func FormatConfigPathErrorMultiline(err error) error {
-	return fmt.Errorf(formatMultilineSetWarnings(err,
+	return fmt.Errorf("%s", formatMultilineSetWarnings(err,
 		noPathPrefix, withSetFailed, noPathInvalid))
 }
 

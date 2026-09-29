@@ -307,7 +307,7 @@ func doTestEditConfigAuth(t *testing.T, topt string) {
 		case testopt_testset:
 			if tc.passTest {
 				if !tc.expAuthd {
-					t.Fatalf(tcDesc + "Invalid test case? Test() cannot pass without authz")
+					t.Fatal(tcDesc + "Invalid test case? Test() cannot pass without authz")
 				}
 				break
 			}

@@ -39,3 +39,7 @@ func SetCurrentConfigVersion(fn func() string) {
 func ResetCurrentConfigVersion() {
 	currentConfigVersion = getCurrentConfigVersion
 }
+
+func SetConfigMgmtCmd(cmd string) {
+	configMgmtCmd = cmd
+}

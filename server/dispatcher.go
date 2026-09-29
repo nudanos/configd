@@ -91,7 +91,7 @@ func (d *Disp) GetConfigSystemFeatures() (map[string]struct{}, error) {
 		feats[common.RoutingInstanceFeature] = struct{}{}
 	}
 
-	if _, err := os.Stat("/opt/vyatta/sbin/vyatta-config-mgmt.pl"); err == nil {
+	if _, err := os.Stat(configMgmtCmd); err == nil {
 		feats[common.ConfigManagementFeature] = struct{}{}
 	}
 
@@ -538,7 +538,7 @@ func (d *Disp) Get(db rpc.DB, sid string, path string) ([]string, error) {
 
 func (d *Disp) GetCommitLog() (map[string]string, error) {
 	comps := make(map[string]string)
-	buf, err := spawn.Command("/opt/vyatta/sbin/vyatta-config-mgmt.pl",
+	buf, err := spawn.Command(configMgmtCmd,
 		"--action=show-commit-log-brief").Output()
 	if err != nil {
 		return comps, err
@@ -793,7 +793,7 @@ func (d *Disp) sessionTermination() error {
 	info := getConfirmedCommitInfo()
 	if info.Session != "" && info.PersistId == "" &&
 		info.Session == strconv.Itoa(int(d.ctx.Pid)) {
-		cmd := spawn.Command("/opt/vyatta/sbin/vyatta-config-mgmt.pl",
+		cmd := spawn.Command(configMgmtCmd,
 			"--action=revert-configuration")
 		out, err := cmd.CombinedOutput()
 		// out contains the output of both stdout and stderr. err is not really
@@ -909,7 +909,7 @@ func (d *Disp) Rollback(sid, revision, comment string, debug bool) (string, erro
 }
 
 func (d *Disp) confirmInternal(sid string) (string, error) {
-	cmd := spawn.Command("/opt/vyatta/sbin/vyatta-config-mgmt.pl",
+	cmd := spawn.Command(configMgmtCmd,
 		"--action=confirm")
 	out, err := cmd.CombinedOutput()
 	// out contains the output of both stdout and stderr. err is not really
@@ -930,7 +930,7 @@ func (d *Disp) Confirm(sid string) (string, error) {
 }
 
 func (d *Disp) confirmPersistIdInternal(persistid string) (string, error) {
-	cmd := spawn.Command("/opt/vyatta/sbin/vyatta-config-mgmt.pl",
+	cmd := spawn.Command(configMgmtCmd,
 		"--action=confirm",
 		fmt.Sprintf("--persistid=%s", persistid))
 	out, err := cmd.CombinedOutput()
@@ -954,7 +954,7 @@ func (d *Disp) ConfirmPersistId(persistid string) (string, error) {
 }
 
 func (d *Disp) ConfirmingCommit() (string, error) {
-	cmd := spawn.Command("/opt/vyatta/sbin/vyatta-config-mgmt.pl",
+	cmd := spawn.Command(configMgmtCmd,
 		"--action=confirming-commit")
 	out, err := cmd.CombinedOutput()
 	// out contains the output of both stdout and stderr. err is not really
@@ -969,7 +969,7 @@ func (d *Disp) ConfirmingCommit() (string, error) {
 }
 
 func (d *Disp) ConfirmSilent(sid string) (string, error) {
-	cmd := spawn.Command("/opt/vyatta/sbin/vyatta-config-mgmt.pl",
+	cmd := spawn.Command(configMgmtCmd,
 		"--action=confirm-silent")
 	out, err := cmd.CombinedOutput()
 	// out contains the output of both stdout and stderr. err is not really
@@ -983,7 +983,7 @@ func (d *Disp) ConfirmSilent(sid string) (string, error) {
 }
 
 func (d *Disp) setConfirmedCommitTimeout(cmt *commitInfo) (string, error) {
-	cmd := spawn.Command("/opt/vyatta/sbin/vyatta-config-mgmt.pl",
+	cmd := spawn.Command(configMgmtCmd,
 		cmt.arguments(strconv.Itoa(int(d.ctx.Pid)))...)
 	out, err := cmd.CombinedOutput()
 	// out contains the output of both stdout and stderr. err is not really
@@ -998,7 +998,7 @@ func (d *Disp) setConfirmedCommitTimeout(cmt *commitInfo) (string, error) {
 	return string(out), err
 }
 func (d *Disp) setConfirmTimeout(mins int) (string, error) {
-	cmd := spawn.Command("/opt/vyatta/sbin/vyatta-config-mgmt.pl",
+	cmd := spawn.Command(configMgmtCmd,
 		"--action=commit-confirm",
 		fmt.Sprintf("--minutes=%d", mins))
 	out, err := cmd.CombinedOutput()
@@ -1294,7 +1294,7 @@ func (d *Disp) Discard(sid string) (bool, error) {
 }
 
 func (d *Disp) ExtractArchive(sid, revision, destination string) (string, error) {
-	cmd := spawn.Command("/opt/vyatta/sbin/vyatta-config-mgmt.pl", "--action=extract-archive", "--revnum="+revision, "--dest="+destination)
+	cmd := spawn.Command(configMgmtCmd, "--action=extract-archive", "--revnum="+revision, "--dest="+destination)
 	out, err := cmd.CombinedOutput()
 	// out contains the output of both stdout and stderr. err is not really
 	// user relevant so shouldn't be printed.

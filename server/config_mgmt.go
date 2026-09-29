@@ -26,6 +26,7 @@ const (
 // Globals which can be manipulated by UTs (see config_mgmt_internal_test.go)
 var configDir = "/config"
 var tmpDir = "/var/tmp/configd"
+var configMgmtCmd = "/opt/vyatta/sbin/vyatta-config-mgmt.pl"
 var callerCmdSetPrivs = true
 
 func userSandboxPath(user string) string {

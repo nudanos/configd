@@ -23,6 +23,9 @@ func TestMain(m *testing.M) {
 	}
 	server.SetTmpDir(dir)
 	server.SetConfigDir(dir)
+	// vyatta-config-mgmt.pl (vyatta-config-mgmt) schedules confirmed-commit
+	// reverts; the tests check command accounting, not the scheduling.
+	server.SetConfigMgmtCmd("/bin/true")
 	server.SetCurrentConfigVersion(func() string {
 		return "/* === vyatta-config-version: \"test@1\" === */\n"
 	})

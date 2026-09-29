@@ -84,7 +84,7 @@ func FormatConfigPathError(err error) error {
 		b.WriteString(configPath)
 		b.WriteString(err.Error())
 	}
-	return fmt.Errorf(b.String())
+	return fmt.Errorf("%s", b.String())
 }
 
 // FormatRpcPathError - pretty print RPC errors for the CLI
@@ -152,7 +152,7 @@ func FormatWarnings(warns []error) error {
 		b.WriteString("\n\n")
 	}
 
-	return fmt.Errorf(b.String())
+	return fmt.Errorf("%s", b.String())
 }
 
 const (

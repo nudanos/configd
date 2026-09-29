@@ -40,13 +40,13 @@ func TestLoadFromSuccessCommandAuthz(t *testing.T) {
 
 	file, err := dispTestLoadOrMergeWriteConfigToFile(testConfig)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 	defer os.Remove(file)
 
 	ok, err := d.LoadFrom(testSID, file, "")
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 	if !ok {
 		t.Fatalf("LoadFrom failed with no error returned")

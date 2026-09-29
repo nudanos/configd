@@ -26,7 +26,7 @@ func usage() {
   This utility allows users to view and change configd debug/log settings.
   Run with no params to view settings (and to see valid options)
 `
-	fmt.Fprintf(os.Stderr, usageInfo)
+	fmt.Fprint(os.Stderr, usageInfo)
 
 }
 

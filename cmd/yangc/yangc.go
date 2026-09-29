@@ -51,7 +51,7 @@ func usage() {
       is specified, the 'base' platform will be used.
 
 `
-	fmt.Fprintf(os.Stderr, usageInfo)
+	fmt.Fprint(os.Stderr, usageInfo)
 
 }
 

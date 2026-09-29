@@ -79,7 +79,7 @@ func checkForDuplicateModelNames(compConfig []*conf.ServiceConfig) error {
 		}
 	}
 	if errs.Len() != 0 {
-		return fmt.Errorf(errs.String())
+		return fmt.Errorf("%s", errs.String())
 	}
 	return nil
 }
@@ -107,7 +107,7 @@ func checkForDuplicateModuleReferences(compConfig []*conf.ServiceConfig) error {
 		}
 	}
 	if errs.Len() != 0 {
-		return fmt.Errorf(errs.String())
+		return fmt.Errorf("%s", errs.String())
 	}
 	return nil
 }

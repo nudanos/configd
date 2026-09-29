@@ -233,7 +233,7 @@ func TestGetFullTreeList(t *testing.T) {
 	}
 	actual := string(ut.ToJSON())
 	if actual != expect {
-		t.Logf(actual)
+		t.Logf("%s", actual)
 		t.Fatalf("Unexpected output found")
 	}
 

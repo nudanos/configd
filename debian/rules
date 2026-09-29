@@ -46,4 +46,4 @@ override_dh_installsystemd:
 
 
 override_dh_installinit:
-	dh_installinit --name=configd --no-start --no-restart-on-upgrade -- defaults 01 99
+	dh_installinit --name=configd --no-start --no-stop-on-upgrade

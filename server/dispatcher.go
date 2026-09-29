@@ -1316,7 +1316,7 @@ func (d *Disp) Save(_ string) (bool, error) {
 		d.ctx.RaisePrivileges()
 		defer d.ctx.DropPrivileges()
 	}
-	return d.SaveTo("/config/config.boot", "")
+	return d.SaveTo(configDir+"/config.boot", "")
 }
 
 func (d *Disp) Load(sid string, file string) (bool, error) {

@@ -6,6 +6,7 @@ package server
 
 var productionCallerCmdSetPrivs = callerCmdSetPrivs
 var productionTmpDir = tmpDir
+var productionConfigDir = configDir
 
 func SetCallerCmdSetPrivs(set bool) {
 	callerCmdSetPrivs = set
@@ -21,4 +22,12 @@ func SetTmpDir(dir string) {
 
 func GetProductionTmpDir() string {
 	return productionTmpDir
+}
+
+func SetConfigDir(dir string) {
+	configDir = dir
+}
+
+func GetProductionConfigDir() string {
+	return productionConfigDir
 }

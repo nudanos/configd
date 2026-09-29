@@ -60,6 +60,7 @@ func commitAndAssertAuditLogs(t *testing.T, d *server.Disp, tAuth auth.TestAuthe
 }
 
 func TestCommitAuditLog(t *testing.T) {
+	useTestTmpDir(t)
 	a := auth.TestAutherAllowAll()
 	d := newTestDispatcher(t, a, commitAuditTestSchema, emptyConfig)
 	dispTestSetupSession(t, d, testSID)
@@ -87,6 +88,7 @@ func TestCommitAuditLog(t *testing.T) {
 }
 
 func TestMultiPriorityCommitAuditLog(t *testing.T) {
+	useTestTmpDir(t)
 	a := auth.TestAutherAllowAll()
 	d := newTestDispatcher(t, a, commitAuditTestSchema, emptyConfig)
 	dispTestSetupSession(t, d, testSID)
@@ -128,6 +130,7 @@ const commitAuditTestSchemaDefault = `
 	}`
 
 func TestDefaultsCommitAuditLog(t *testing.T) {
+	useTestTmpDir(t)
 	a := auth.TestAutherAllowAll()
 	d := newTestDispatcher(t, a, commitAuditTestSchemaDefault, emptyConfig)
 	dispTestSetupSession(t, d, testSID)
@@ -166,4 +169,17 @@ func TestDefaultsCommitAuditLog(t *testing.T) {
 	commitAndAssertAuditLogs(t, d, a,
 		genCommitAuditLog("updated", "test-container default-leaf"),
 		genCommitAuditLog("updated", "test-container"))
+}
+
+// Commit saves the running config: through a temporary file in tmpDir
+// (created in production by configd's tmpfiles.d entry) to
+// configDir/config.boot. Neither exists in a build environment.
+func useTestTmpDir(t *testing.T) {
+	dir := t.TempDir()
+	server.SetTmpDir(dir)
+	server.SetConfigDir(dir)
+	t.Cleanup(func() {
+		server.SetTmpDir(server.GetProductionTmpDir())
+		server.SetConfigDir(server.GetProductionConfigDir())
+	})
 }

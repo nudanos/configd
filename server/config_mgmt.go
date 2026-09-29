@@ -74,6 +74,10 @@ func parseMgmtURI(uri string) (bool, string, error) {
 	return false, uri, nil
 }
 
+// currentConfigVersion is replaced in unit tests, which run where the
+// version script is not installed.
+var currentConfigVersion = getCurrentConfigVersion
+
 func getCurrentConfigVersion() string {
 	out, err := spawn.Command("/opt/vyatta/sbin/vyatta_current_conf_ver.pl").Output()
 	if err != nil {
@@ -158,7 +162,7 @@ func (d *Disp) writeRunningConfigToFile(file *os.File) error {
 	if err != nil {
 		return err
 	}
-	_, err = file.WriteString(cfg + getCurrentConfigVersion())
+	_, err = file.WriteString(cfg + currentConfigVersion())
 	if err != nil {
 		return err
 	}

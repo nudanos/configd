@@ -31,3 +31,11 @@ func SetConfigDir(dir string) {
 func GetProductionConfigDir() string {
 	return productionConfigDir
 }
+
+func SetCurrentConfigVersion(fn func() string) {
+	currentConfigVersion = fn
+}
+
+func ResetCurrentConfigVersion() {
+	currentConfigVersion = getCurrentConfigVersion
+}

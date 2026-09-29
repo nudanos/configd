@@ -173,13 +173,19 @@ func TestDefaultsCommitAuditLog(t *testing.T) {
 
 // Commit saves the running config: through a temporary file in tmpDir
 // (created in production by configd's tmpfiles.d entry) to
-// configDir/config.boot. Neither exists in a build environment.
+// configDir/config.boot, ending it with the version footer from
+// vyatta_current_conf_ver.pl. None of these exists in a build environment,
+// and without the footer a second save refuses to overwrite the first.
 func useTestTmpDir(t *testing.T) {
 	dir := t.TempDir()
 	server.SetTmpDir(dir)
 	server.SetConfigDir(dir)
+	server.SetCurrentConfigVersion(func() string {
+		return "/* === vyatta-config-version: \"test@1\" === */\n"
+	})
 	t.Cleanup(func() {
 		server.SetTmpDir(server.GetProductionTmpDir())
 		server.SetConfigDir(server.GetProductionConfigDir())
+		server.ResetCurrentConfigVersion()
 	})
 }

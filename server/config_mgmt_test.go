@@ -83,9 +83,6 @@ func TestSaveToCommandAuthz(t *testing.T) {
 	server.SetCallerCmdSetPrivs(false)
 	defer server.SetCallerCmdSetPrivs(server.GetProductionCallerCmdSetPrivs())
 
-	server.SetTmpDir(os.TempDir())
-	defer server.SetTmpDir(server.GetProductionTmpDir())
-
 	dispTestSetupSession(t, d, testSID)
 
 	file := os.TempDir() + "/saveto"

@@ -60,7 +60,6 @@ func commitAndAssertAuditLogs(t *testing.T, d *server.Disp, tAuth auth.TestAuthe
 }
 
 func TestCommitAuditLog(t *testing.T) {
-	useTestTmpDir(t)
 	a := auth.TestAutherAllowAll()
 	d := newTestDispatcher(t, a, commitAuditTestSchema, emptyConfig)
 	dispTestSetupSession(t, d, testSID)
@@ -88,7 +87,6 @@ func TestCommitAuditLog(t *testing.T) {
 }
 
 func TestMultiPriorityCommitAuditLog(t *testing.T) {
-	useTestTmpDir(t)
 	a := auth.TestAutherAllowAll()
 	d := newTestDispatcher(t, a, commitAuditTestSchema, emptyConfig)
 	dispTestSetupSession(t, d, testSID)
@@ -130,7 +128,6 @@ const commitAuditTestSchemaDefault = `
 	}`
 
 func TestDefaultsCommitAuditLog(t *testing.T) {
-	useTestTmpDir(t)
 	a := auth.TestAutherAllowAll()
 	d := newTestDispatcher(t, a, commitAuditTestSchemaDefault, emptyConfig)
 	dispTestSetupSession(t, d, testSID)
@@ -169,23 +166,4 @@ func TestDefaultsCommitAuditLog(t *testing.T) {
 	commitAndAssertAuditLogs(t, d, a,
 		genCommitAuditLog("updated", "test-container default-leaf"),
 		genCommitAuditLog("updated", "test-container"))
-}
-
-// Commit saves the running config: through a temporary file in tmpDir
-// (created in production by configd's tmpfiles.d entry) to
-// configDir/config.boot, ending it with the version footer from
-// vyatta_current_conf_ver.pl. None of these exists in a build environment,
-// and without the footer a second save refuses to overwrite the first.
-func useTestTmpDir(t *testing.T) {
-	dir := t.TempDir()
-	server.SetTmpDir(dir)
-	server.SetConfigDir(dir)
-	server.SetCurrentConfigVersion(func() string {
-		return "/* === vyatta-config-version: \"test@1\" === */\n"
-	})
-	t.Cleanup(func() {
-		server.SetTmpDir(server.GetProductionTmpDir())
-		server.SetConfigDir(server.GetProductionConfigDir())
-		server.ResetCurrentConfigVersion()
-	})
 }

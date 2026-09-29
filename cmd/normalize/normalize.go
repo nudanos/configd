@@ -150,13 +150,40 @@ func NormalizeNumber(token string) string {
 	return fmt.Sprintf("%d", number)
 }
 
+// parseIPv4 is net.ParseIP, except that it also reads octets with leading
+// zeros as decimal ("192.168.01.01" is 192.168.1.1). Go 1.17 made ParseIP
+// reject them (CVE-2021-29923: other parsers read them as octal); the
+// normalizer relied on the old reading, and returns the canonical form, so
+// the ambiguous spelling never reaches anything downstream.
+func parseIPv4(s string) net.IP {
+	if ip := net.ParseIP(s); ip != nil {
+		return ip
+	}
+	octets := strings.Split(s, ".")
+	if len(octets) != net.IPv4len {
+		return nil
+	}
+	var b [net.IPv4len]byte
+	for i, o := range octets {
+		if len(o) == 0 || len(o) > 3 || strings.Trim(o, "0123456789") != "" {
+			return nil
+		}
+		n, err := strconv.ParseUint(o, 10, 8)
+		if err != nil {
+			return nil
+		}
+		b[i] = byte(n)
+	}
+	return net.IPv4(b[0], b[1], b[2], b[3])
+}
+
 func NormalizeIPv4(token string) string {
 
 	if strings.Contains(token, ":") {
 		return token
 	}
 
-	if ip := net.ParseIP(token); ip != nil {
+	if ip := parseIPv4(token); ip != nil {
 		return ip.String()
 	}
 
@@ -193,7 +220,7 @@ func NormalizeIPv4prefix(token string) string {
 	addr_string := token[:i]
 	mask_string := token[i+1:]
 
-	addr := net.ParseIP(addr_string)
+	addr := parseIPv4(addr_string)
 	if addr == nil {
 		return token
 	}

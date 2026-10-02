@@ -1,3 +1,11 @@
+configd (2.15) trixie; urgency=medium
+
+  * Add ${misc:Depends} to every binary package: dh-vci adds
+    deb-vci-helper there, which the maintainer scripts call; without it apt
+    could remove deb-vci-helper first and the prerm failed.
+
+ -- NuDanOS Maintainers <jon@fernandez.tech>  Fri, 02 Oct 2026 10:09:38 -0700
+
 configd (2.14) trixie; urgency=medium
 
   * configd.preinst: turn nounset off before #DEBHELPER#; dh_installinit's

@@ -83,7 +83,7 @@ Architecture: any
 Depends: 
  bash (>= 5~) | vyatta-bash (>= 1:4.4-1vyatta12),
  cli-shell-api,
- ${shlibs:Depends}
+ ${shlibs:Depends}, ${misc:Depends}
 Recommends: jq, xmlstarlet
 Built-Using: ${misc:Built-Using}
 Description: Configuration utilities
@@ -92,14 +92,14 @@ Description: Configuration utilities
 Package: yang-utils
 Architecture: any
 Replaces: yang2path
-Depends: ${perl:Depends}, ${shlibs:Depends}
+Depends: ${perl:Depends}, ${shlibs:Depends}, ${misc:Depends}
 Built-Using: ${misc:Built-Using}
 Description: Yang tools
  A set of tools that can be used to work with Yang definitions
 
 Package: configd-v1-yang
 Architecture: all
-Depends: configd (>= ${source:Version})
+Depends: configd (>= ${source:Version}), ${misc:Depends}
 Replaces: configd (<= 1.7)
 Section: admin
 Description: configd-v1 module
@@ -107,6 +107,7 @@ Description: configd-v1 module
 
 Package: ietf-inet-types-yang
 Architecture: all
+Depends: ${misc:Depends}
 Replaces: configd (<= 1.7)
 Section: admin
 Description: ietf-inet-types module
@@ -114,7 +115,7 @@ Description: ietf-inet-types module
 
 Package: ietf-netconf-monitoring-yang
 Architecture: all
-Depends: ${yang:Depends}
+Depends: ${yang:Depends}, ${misc:Depends}
 Replaces: configd (<= 1.7)
 Section: admin
 Description: ietf-netconf-monitoring module
@@ -122,6 +123,7 @@ Description: ietf-netconf-monitoring module
 
 Package: ietf-yang-types-yang
 Architecture: all
+Depends: ${misc:Depends}
 Replaces: configd (<= 1.7)
 Section: admin
 Description: ietf-yang-types module
@@ -133,7 +135,7 @@ Depends:
  acmd,
  configd (>= ${source:Version}),
  vyatta-cfg,
- ${yang:Depends}
+ ${yang:Depends}, ${misc:Depends}
 Replaces: configd (<= 1.7)
 Section: admin
 Description: vyatta-system-acm-configd-v1 module
@@ -141,7 +143,7 @@ Description: vyatta-system-acm-configd-v1 module
 
 Package: ietf-netconf-yang
 Architecture: all
-Depends: ${yang:Depends}
+Depends: ${yang:Depends}, ${misc:Depends}
 Replaces: configd (<= 1.7)
 Section: admin
 Description: ietf-netconf module
@@ -149,7 +151,7 @@ Description: ietf-netconf module
 
 Package: ietf-netconf-with-defaults-yang
 Architecture: all
-Depends: ${yang:Depends}
+Depends: ${yang:Depends}, ${misc:Depends}
 Replaces: configd (<= 1.7)
 Section: admin
 Description: ietf-netconf-with-defaults module
@@ -157,6 +159,7 @@ Description: ietf-netconf-with-defaults module
 
 Package: yangd-v1-yang
 Architecture: all
+Depends: ${misc:Depends}
 Section: admin
 Description: yangd-v1 module
  The YANG module for yangd-v1

@@ -1,3 +1,11 @@
+configd (2.14) trixie; urgency=medium
+
+  * configd.preinst: turn nounset off before #DEBHELPER#; dh_installinit's
+    snippet reads "$2", which a fresh install does not pass, so configd
+    could not be installed on a clean system.
+
+ -- NuDanOS Maintainers <jon@fernandez.tech>  Fri, 02 Oct 2026 09:12:51 -0700
+
 configd (2.13) trixie; urgency=medium
 
   * Port to Debian 13 (trixie): debhelper-compat 13, Standards-Version 4.7.2, Rules-Requires-Root, NuDanOS Vcs.

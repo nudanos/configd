@@ -17,4 +17,7 @@ if getent passwd configd >/dev/null; then
         usermod -a -G vyattacfg configd
 fi
 
+# debhelper's snippets are not written for nounset: dh_installinit's reads
+# "$2", which a fresh install does not pass.
+set +u
 #DEBHELPER#

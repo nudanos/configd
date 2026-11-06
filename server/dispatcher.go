@@ -315,24 +315,24 @@ func (d *Disp) TmplGetChildren(path string) ([]string, error) {
 // looks like a XPath leafref-type reference to a node.
 //
 // NB:
-//    (1) startNode represents root node
 //
-//    (2) ps represents path to leaf / leaf-list schema node, but NOT
-//        to the value node underneath.  Think of NodeRefs as references
-//        to a node generically, rather than to a specific value of that
-//        node.
+//	(1) startNode represents root node
 //
-//    (3) All NodeRefs are absolute, not relative.
+//	(2) ps represents path to leaf / leaf-list schema node, but NOT
+//	    to the value node underneath.  Think of NodeRefs as references
+//	    to a node generically, rather than to a specific value of that
+//	    node.
 //
-//    (4) We generate a single element in the NodeRef for List+ListEntry.
-//        We get the key name from the List, and save it for use with the
-//        extra data we get from the ListEntry
+//	(3) All NodeRefs are absolute, not relative.
 //
-//    (5) This ought to be in configd/pathutil but with the schema reference
-//        we end up with a circular reference to packages via the configd/exec
-//        package and it all gets very messy trying to unentangle it.  Exercise
-//        for the reader on another day ...
+//	(4) We generate a single element in the NodeRef for List+ListEntry.
+//	    We get the key name from the List, and save it for use with the
+//	    extra data we get from the ListEntry
 //
+//	(5) This ought to be in configd/pathutil but with the schema reference
+//	    we end up with a circular reference to packages via the configd/exec
+//	    package and it all gets very messy trying to unentangle it.  Exercise
+//	    for the reader on another day ...
 func MakeNodeRef(ps []string, startNode schema.Node) xutils.NodeRef {
 	// Deal with root node (empty ps)
 	if len(ps) == 0 {
@@ -1124,9 +1124,16 @@ func (d *Disp) confirmedCommitInternal(
 		}
 	}
 
-	if ok && len(errs) == 0 {
-		if ok, err := d.Save(""); !ok {
-			return "", err
+	recoveryOnly := len(errs) > 0
+	for _, commitErr := range errs {
+		if _, isRecovery := commitErr.(*session.RecoveryError); !isRecovery {
+			recoveryOnly = false
+		}
+	}
+	if ok && (len(errs) == 0 || recoveryOnly) {
+		saved, saveErr := d.Save("")
+		if !saved && !recoveryOnly {
+			return "", saveErr
 		}
 		if cmt != nil && cmt.confirmed {
 
@@ -1137,16 +1144,32 @@ func (d *Disp) confirmedCommitInternal(
 				rpcout.WriteByte('\n')
 			}
 			if err != nil {
-				errs = append(errs, err)
+				if recoveryOnly {
+					return rpcout.String(), fmt.Errorf("%v; rollback scheduling failed: %w", errs[0], err)
+				}
+				return rpcout.String(), err
 			}
 		} else if confirmTimeout != 0 {
 			out, err := d.setConfirmTimeout(confirmTimeout)
 			rpcout.WriteByte('\n')
 			rpcout.WriteString(out)
 			rpcout.WriteByte('\n')
-			return rpcout.String(), err
+			if err != nil {
+				if recoveryOnly {
+					return rpcout.String(), fmt.Errorf("%v; rollback scheduling failed: %w", errs[0], err)
+				}
+				return rpcout.String(), err
+			}
 		}
-		return rpcout.String(), nil
+		if !saved {
+			if recoveryOnly {
+				return rpcout.String(), fmt.Errorf("%v; save failed: %w", errs[0], saveErr)
+			}
+			return "", saveErr
+		}
+		if len(errs) == 0 {
+			return rpcout.String(), nil
+		}
 	}
 
 	var merr mgmterror.MgmtErrorList
@@ -1703,7 +1726,6 @@ func (d *Disp) GetModuleSchemas() (string, error) {
 // Separately, RFC 6022 section 4.1 describes the retrieval of a list of all
 // supported schemas using the ietf-netconf-monitoring netconf-state <schemas>
 // element.  This explicitly includes modules and submodules.
-//
 func (d *Disp) getSchemasInternal(incSubmods bool) (string, error) {
 	var b bytes.Buffer
 	enc := xml.NewEncoder(&b)
@@ -2090,7 +2112,6 @@ func (d *Disp) CallRpcXml(moduleNamespace, name, args string) (string, error) {
 //
 // If <pos> < 0 then <prefix> will never be used, maintaining the original
 // behaviour of the Expand() API.
-//
 func (d *Disp) ExpandWithPrefix(path, prefix string, pos int) (string, error) {
 	// Need prefix, and 'argpos'
 	ps, err := d.expandPath(pathutil.Makepath(path), prefix, pos+1)

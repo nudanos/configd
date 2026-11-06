@@ -79,7 +79,7 @@ func IsLoginPidError(err error) bool {
 	return ok
 }
 
-//Send an rpc response with appropriate data or an error
+// Send an rpc response with appropriate data or an error
 func (conn *SrvConn) sendResponse(resp *rpc.Response) error {
 	conn.sending.Lock()
 	err := conn.enc.Encode(&resp)
@@ -88,7 +88,7 @@ func (conn *SrvConn) sendResponse(resp *rpc.Response) error {
 
 }
 
-//Receive an rpc request and do some preprocessing.
+// Receive an rpc request and do some preprocessing.
 func (conn *SrvConn) readRequest() (*rpc.Request, error) {
 	var req = new(rpc.Request)
 	err := conn.dec.Decode(req)
@@ -117,12 +117,25 @@ func getLoginUid(pid int32) (uint32, error) {
 	return u, nil
 }
 
-//Grab the credentials off of the unix socet using SO_PEERCRED and store them int the SrvConn
+// A privileged peer may act on behalf of its audit login identity. An
+// unprivileged peer must not gain another identity through attribution.
+func resolvePeerUID(peer, login, daemon uint32, loginErr error) (uint32, error) {
+	if loginErr != nil {
+		return peer, loginErr
+	}
+	if peer != login && peer != 0 && peer != daemon {
+		return peer, nil
+	}
+	return login, nil
+}
+
+// Grab the credentials off of the unix socet using SO_PEERCRED and store them int the SrvConn
 func (conn *SrvConn) getCreds() (*syscall.Ucred, error) {
 	uf, err := conn.File()
 	if err != nil {
 		return nil, err
 	}
+	defer uf.Close()
 	cred, err := syscall.GetsockoptUcred(
 		int(uf.Fd()),
 		syscall.SOL_SOCKET,
@@ -131,9 +144,8 @@ func (conn *SrvConn) getCreds() (*syscall.Ucred, error) {
 		conn.srv.LogError(err)
 		return nil, err
 	}
-	uf.Close()
-
-	cred.Uid, err = getLoginUid(cred.Pid)
+	loginUID, loginErr := getLoginUid(cred.Pid)
+	cred.Uid, err = resolvePeerUID(cred.Uid, loginUID, conn.srv.uid, loginErr)
 
 	return cred, err
 }
@@ -260,8 +272,25 @@ func (conn *SrvConn) Call(
 	for i, v := range args {
 		t1 := reflect.TypeOf(v)
 		t2 := typ.In(i + 1)
+		if t1 == nil {
+			return nil, &rpc.ArgErr{Method: method, Farg: v, Etyp: t2.String()}
+		}
+		if t2 == reflect.TypeOf(rpc.DB(0)) {
+			rv := reflect.ValueOf(v)
+			valid := rv.CanConvert(t2)
+			if valid && (rv.Kind() == reflect.Float32 || rv.Kind() == reflect.Float64) {
+				f := rv.Float()
+				valid = f >= float64(rpc.AUTO) && f <= float64(rpc.EFFECTIVE) && f == float64(int(f))
+			} else if valid {
+				db := rv.Convert(t2).Int()
+				valid = db >= int64(rpc.AUTO) && db <= int64(rpc.EFFECTIVE)
+			}
+			if !valid {
+				return nil, &rpc.ArgErr{Method: method, Farg: v, Typ: t1.String(), Etyp: t2.String()}
+			}
+		}
 		if t1 != t2 {
-			if !t1.ConvertibleTo(t2) {
+			if !reflect.ValueOf(v).CanConvert(t2) {
 				return nil, &rpc.ArgErr{Method: method, Farg: v, Typ: t1.Name(), Etyp: t2.Name()}
 			}
 			vals[i+1] = reflect.ValueOf(v).Convert(t2)

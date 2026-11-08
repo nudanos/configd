@@ -8,8 +8,10 @@
 package session
 
 import (
+	"fmt"
 	"os"
 	"os/user"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -38,6 +40,14 @@ type commitresp struct {
 	ok  bool
 }
 
+// RecoveryError reports that an applied commit could not be persisted for restart.
+type RecoveryError struct{ Err error }
+
+func (e *RecoveryError) Error() string {
+	return fmt.Sprintf("persist running configuration: %v", e.Err)
+}
+func (e *RecoveryError) Unwrap() error { return e.Err }
+
 type CommitMgr struct {
 	running   *data.AtomicNode
 	effective *Session
@@ -61,25 +71,37 @@ func (m *CommitMgr) SetEffective(effective *Session) {
 }
 
 func (m *CommitMgr) writeRunning(ctx *configd.Context) error {
-	f, err := os.Create(ctx.Config.Runfile)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	// The running file contains the running configuration with secrets, and
-	// should definitely NOT be world readable.
-	err = f.Chmod(0600)
-	if err != nil {
-		return err
-	}
-	//Effective and running are equivalent here use that
-	//fact to avoid creating another union tree.
+	// Generate the complete configuration before touching the previous file.
 	out, err := m.effective.Show(ctx, []string{}, false, false)
 	if err != nil {
 		return err
 	}
-	_, err = f.WriteString(out)
-	return err
+	dir := filepath.Dir(ctx.Config.Runfile)
+	f, err := os.CreateTemp(dir, ".running-*")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(f.Name())
+	if _, err = f.WriteString(out); err != nil {
+		f.Close()
+		return err
+	}
+	if err = f.Sync(); err != nil {
+		f.Close()
+		return err
+	}
+	if err = f.Close(); err != nil {
+		return err
+	}
+	if err = os.Rename(f.Name(), ctx.Config.Runfile); err != nil {
+		return err
+	}
+	d, err := os.Open(dir)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+	return d.Sync()
 }
 
 func (m *CommitMgr) commit(sid string, sctx *configd.Context, candidate *data.Node, message string, debug bool) *commitresp {
@@ -162,7 +184,9 @@ func (m *CommitMgr) commit(sid string, sctx *configd.Context, candidate *data.No
 	effective := m.effective.MergeTreeWithoutDefaults(ctx.ctx)
 	m.effective.Discard(ctx.ctx) //we got what we needed
 	m.running.Store(effective)
-	m.writeRunning(ctx.ctx)
+	if err := m.writeRunning(ctx.ctx); err != nil {
+		errs = append(errs, &RecoveryError{Err: err})
+	}
 	ctx.LogCommitTime("Write config", writeStart)
 
 	// Run post-hooks after we've written out the running cfg

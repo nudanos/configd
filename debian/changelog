@@ -1,3 +1,10 @@
+configd (2.16) trixie; urgency=medium
+
+  * Harden RPC argument and peer identity handling, and persist running
+    configuration atomically with observable recovery failures.
+
+ -- NuDanOS Maintainers <jon@fernandez.tech>  Fri, 06 Nov 2026 12:00:00 -0700
+
 configd (2.15) trixie; urgency=medium
 
   * Add ${misc:Depends} to every binary package: dh-vci adds

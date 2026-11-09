@@ -57,4 +57,10 @@ esac
 
 #DEBHELPER#
 
+# Refresh active daemons only after the upgraded files and units are configured.
+# try-restart leaves stopped services alone and respects local service policy.
+if [ "$1" = configure ] && [ -n "${2:-}" ] && [ -d /run/systemd/system ]; then
+    deb-systemd-invoke try-restart configd.service
+fi
+
 exit 0

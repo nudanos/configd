@@ -1,3 +1,11 @@
+configd (2.17) trixie; urgency=medium
+
+  * Refresh active configd processes after package upgrades so password
+    renewal uses the corrected peer identity handling before reboot.
+    Preserve stopped services and respect local service policy.
+
+ -- NuDanOS Maintainers <jon@fernandez.tech>  Mon, 09 Nov 2026 12:00:00 -0700
+
 configd (2.16) trixie; urgency=medium
 
   * Harden RPC argument and peer identity handling, and persist running

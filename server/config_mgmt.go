@@ -297,14 +297,14 @@ func (d *Disp) LoadFrom(sid, source, routingInstance string) (bool, error) {
 func (d *Disp) saveToInternal(dest, routingInstance string, local bool) (bool, error) {
 	if local {
 		dest = d.parseLocalPath(dest)
-		if err := d.validLocalSaveToDest(dest); err != nil {
-			return false, err
-		}
 		lock, err := startuplock.Acquire(startupLockDir, startuplock.Timeout)
 		if err != nil {
 			return false, err
 		}
 		defer lock.Close()
+		if err := d.validLocalSaveToDest(dest); err != nil {
+			return false, err
+		}
 	}
 
 	tmpFile, err := d.writeTempRunningConfigFile()

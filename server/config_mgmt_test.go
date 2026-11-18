@@ -174,3 +174,56 @@ func TestLocalSaveWaitsForStartupWriter(t *testing.T) {
 		t.Fatalf("save used a stale running snapshot: %s", content)
 	}
 }
+
+func TestLocalSaveWaitsBeforeValidatingDestination(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "startup-lock")
+	oldDir := server.GetStartupLockDir()
+	server.SetStartupLockDir(dir)
+	defer server.SetStartupLockDir(oldDir)
+	held, err := startuplock.Acquire(dir, time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer held.Close()
+	a := auth.TestAutherAllowAll()
+	d := newTestDispatcherWithCustomAuth(t, a, loadOrMergeSchema, initConfig, false, false)
+	server.SetCallerCmdSetPrivs(false)
+	defer server.SetCallerCmdSetPrivs(server.GetProductionCallerCmdSetPrivs())
+	dest := filepath.Join(t.TempDir(), "saved")
+	valid := []byte("teststring previous\n/* === vyatta-config-version: \"test@1\" === */\n")
+	if err := os.WriteFile(dest, valid, 0600); err != nil {
+		t.Fatal(err)
+	}
+	// Emulate a cooperating writer's brief truncate/copy phase under the lock.
+	if err := os.WriteFile(dest, nil, 0600); err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan error, 1)
+	go func() { _, err := d.SaveTo(dest, ""); done <- err }()
+	select {
+	case err := <-done:
+		t.Fatalf("save validated a destination while locked: %v", err)
+	case <-time.After(250 * time.Millisecond):
+	}
+	if err := os.WriteFile(dest, valid, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := held.Close(); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("save after writer completed: %v", err)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("save did not resume after lock release")
+	}
+	got, err := os.ReadFile(dest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(got), "stuff") || strings.Contains(string(got), "previous") {
+		t.Fatalf("save did not write the current snapshot: %s", got)
+	}
+}

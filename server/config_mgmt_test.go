@@ -150,8 +150,9 @@ func TestLocalSaveWaitsForStartupWriter(t *testing.T) {
 		t.Fatalf("save passed a held startup lock: %v", err)
 	case <-time.After(250 * time.Millisecond):
 	}
-	// Runtime commits do not take this lock. The save must snapshot only
-	// after this change, rather than retaining a stale pre-lock snapshot.
+	// The lower-level session commit used by this fixture does not perform
+	// the dispatcher's automatic Save. Change RUNNING here so the waiting
+	// save must snapshot only afterwards.
 	sessiontest.ValidateSet(t, sess, srv.Ctx, []string{"teststring", "fresh-value"}, false)
 	if _, errs, ok := sess.Commit(srv.Ctx, "", false); !ok || len(errs) != 0 {
 		t.Fatalf("runtime commit: ok=%v errors=%v", ok, errs)

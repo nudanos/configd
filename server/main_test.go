@@ -22,6 +22,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	server.SetTmpDir(dir)
+	server.SetStartupLockDir(dir + "/startup-lock")
 	server.SetConfigDir(dir)
 	// vyatta-config-mgmt.pl (vyatta-config-mgmt) schedules confirmed-commit
 	// reverts; the tests check command accounting, not the scheduling.

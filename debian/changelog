@@ -1,3 +1,10 @@
+configd (2.18) trixie; urgency=medium
+
+  * Serialize local startup configuration saves before taking the running
+    snapshot, using the shared bounded startup writer lock.
+
+ -- NuDanOS Maintainers <jon@fernandez.tech>  Wed, 18 Nov 2026 12:00:00 -0700
+
 configd (2.17) trixie; urgency=medium
 
   * Refresh active configd processes after package upgrades so password

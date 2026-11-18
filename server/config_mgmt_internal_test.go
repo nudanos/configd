@@ -43,3 +43,6 @@ func ResetCurrentConfigVersion() {
 func SetConfigMgmtCmd(cmd string) {
 	configMgmtCmd = cmd
 }
+
+func SetStartupLockDir(dir string) { startupLockDir = dir }
+func GetStartupLockDir() string    { return startupLockDir }

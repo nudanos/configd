@@ -5,8 +5,11 @@
 package server_test
 
 import (
+	"github.com/danos/configd/startuplock"
 	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/danos/config/auth"
 	"github.com/danos/config/testutils"
@@ -117,4 +120,38 @@ func TestSaveToRoutingInstanceCommandAuthz(t *testing.T) {
 
 	assertCommandAaaNoSecrets(t, a,
 		[]string{"save", "routing-instance", "red", "scp://bar:**@localhost/conf"})
+}
+
+func TestLocalSaveWaitsForStartupWriter(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "startup-lock")
+	oldDir := server.GetStartupLockDir()
+	server.SetStartupLockDir(dir)
+	defer server.SetStartupLockDir(oldDir)
+	held, err := startuplock.Acquire(dir, time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := auth.TestAutherAllowAll()
+	d := newTestDispatcherWithCustomAuth(t, a, loadOrMergeSchema, initConfig, false, false)
+	server.SetCallerCmdSetPrivs(false)
+	defer server.SetCallerCmdSetPrivs(server.GetProductionCallerCmdSetPrivs())
+	dispTestSetupSession(t, d, testSID)
+	done := make(chan error, 1)
+	dest := filepath.Join(t.TempDir(), "saved")
+	go func() { _, err := d.SaveTo(dest, ""); done <- err }()
+	select {
+	case err := <-done:
+		held.Close()
+		t.Fatalf("save passed a held startup lock: %v", err)
+	case <-time.After(250 * time.Millisecond):
+	}
+	held.Close()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("save did not resume after lock release")
+	}
 }

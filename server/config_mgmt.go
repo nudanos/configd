@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/danos/configd/rpc"
+	"github.com/danos/configd/startuplock"
 	"github.com/danos/mgmterror"
 	"github.com/danos/utils/pathutil"
 	spawn "os/exec"
@@ -26,6 +27,7 @@ const (
 // Globals which can be manipulated by UTs (see config_mgmt_internal_test.go)
 var configDir = "/config"
 var tmpDir = "/var/tmp/configd"
+var startupLockDir = "/run/nudanos-startup"
 var configMgmtCmd = "/opt/vyatta/sbin/vyatta-config-mgmt.pl"
 var callerCmdSetPrivs = true
 
@@ -298,6 +300,11 @@ func (d *Disp) saveToInternal(dest, routingInstance string, local bool) (bool, e
 		if err := d.validLocalSaveToDest(dest); err != nil {
 			return false, err
 		}
+		lock, err := startuplock.Acquire(startupLockDir, startuplock.Timeout)
+		if err != nil {
+			return false, err
+		}
+		defer lock.Close()
 	}
 
 	tmpFile, err := d.writeTempRunningConfigFile()

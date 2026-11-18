@@ -5,9 +5,11 @@
 package server_test
 
 import (
+	"github.com/danos/configd/session/sessiontest"
 	"github.com/danos/configd/startuplock"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -132,7 +134,10 @@ func TestLocalSaveWaitsForStartupWriter(t *testing.T) {
 		t.Fatal(err)
 	}
 	a := auth.TestAutherAllowAll()
-	d := newTestDispatcherWithCustomAuth(t, a, loadOrMergeSchema, initConfig, false, false)
+	srv, sess := sessiontest.NewTestSpec(t).SetSingleSchema(loadOrMergeSchema).
+		SetConfig(initConfig).SetAuther(a, false, false).Init()
+	defer sess.Kill()
+	d := server.NewDispatcher(srv.Smgr, srv.Cmgr, srv.Ms, srv.MsFull, srv.Ctx)
 	server.SetCallerCmdSetPrivs(false)
 	defer server.SetCallerCmdSetPrivs(server.GetProductionCallerCmdSetPrivs())
 	dispTestSetupSession(t, d, testSID)
@@ -145,6 +150,12 @@ func TestLocalSaveWaitsForStartupWriter(t *testing.T) {
 		t.Fatalf("save passed a held startup lock: %v", err)
 	case <-time.After(250 * time.Millisecond):
 	}
+	// Runtime commits do not take this lock. The save must snapshot only
+	// after this change, rather than retaining a stale pre-lock snapshot.
+	sessiontest.ValidateSet(t, sess, srv.Ctx, []string{"teststring", "fresh-value"}, false)
+	if _, errs, ok := sess.Commit(srv.Ctx, "", false); !ok || len(errs) != 0 {
+		t.Fatalf("runtime commit: ok=%v errors=%v", ok, errs)
+	}
 	held.Close()
 	select {
 	case err := <-done:
@@ -153,5 +164,12 @@ func TestLocalSaveWaitsForStartupWriter(t *testing.T) {
 		}
 	case <-time.After(3 * time.Second):
 		t.Fatal("save did not resume after lock release")
+	}
+	content, err := os.ReadFile(dest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(content), "fresh-value") || strings.Contains(string(content), "stuff") {
+		t.Fatalf("save used a stale running snapshot: %s", content)
 	}
 }
